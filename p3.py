@@ -1,24 +1,10 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 def sigmoid(x):
     return 1/(1+np.exp(-x))
 
-def tanh(x):
-    return np.tanh(x)
-
-def relu(x):
-    return np.maximum(x,0)
-
 def sigmoid_derivative(x):
     return x*(1-x)
-
-def tanh_derivative(x):
-    return 1 - np.tanh(x)**2
-
-def relu_derivative(x):
-    return np.where(x>0,1,0)
-
 
 def intializeWeights(input_size, hidden_size, output_size):
     np.random.seed(42)
@@ -87,17 +73,10 @@ learning_rate = 0.01
 sigmoid_loss_history, sigmoid_hidden_layer_input_weights, sigmoid_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
                                                                                                                         learning_rate, epochs, sigmoid_derivative, sigmoid)
 
-tanh_loss_history, tanh_hidden_layer_input_weights, tanh_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
-                                                                                                                        learning_rate, epochs, tanh_derivative, tanh)
-
-relu_loss_history, relu_hidden_layer_input_weights, relu_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
-                                                                                                                        learning_rate, epochs, relu_derivative, relu)
-
 plt.plot(sigmoid_loss_history, label='sigmoid')
-plt.plot(tanh_loss_history, label='tanh')
-plt.plot(relu_loss_history, label='relu')
-plt.title("Loss History")
-plt.xlabel('epochs')
-plt.ylabel('loss_history')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.title("Performace")
 plt.legend()
+plt.title("Perforamce")
 plt.show()
