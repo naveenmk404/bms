@@ -1,54 +1,103 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class Perceptron:
-    def __init__(self,input_size,learning_rate=0.01,epochs=1000):
-        np.random.seed(20)
-        self.weights = np.random.randn(input_size + 1)
-        self.learning_rate = learning_rate
-        self.epochs = epochs
-        self.errors = []
-    
-    def activation_function(self,x):
-        return 1 if x>= 0 else 0
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
 
-    def predict(self,inputs):
-        weighted_sum = np.dot(inputs, self.weights[1:])+self.weights[0]
-        return self.activation_function(weighted_sum)
-    
-    def train(self,training_data,labels):
-        for epoch in range(self.epochs):
-            total_error = 0
-            for inputs,label in zip(training_data,labels):
-                prediction = self.predict(inputs)
-                error = label - prediction
-                total_error += int(error!=0)
+def tanh(x):
+    return np.tanh(x)
 
-                self.weights[1:] += self.learning_rate * error * inputs
-                self.weights[0] += self.learning_rate * error
-            
-            self.errors.append(total_error)
+def relu(x):
+    return np.maximum(x,0)
 
-            if(epoch % 10 == 0):
-                print(f"epoch = {epoch}, error = {total_error}")
-            
-            if(total_error == 0):
-                print(f"converges early")
-                break
+def sigmoid_derivative(x):
+    return x*(1-x)
 
-training_data = np.array([[0,0],[0,1],[1,0],[1,1]]) 
-labels = np.array([0,0,0,1]) 
+def tanh_derivative(x):
+    return 1 - np.tanh(x)**2
 
-perceptron = Perceptron(2)
+def relu_derivative(x):
+    return np.where(x>0,1,0)
 
-perceptron.train(training_data,labels)
 
-plt.scatter(training_data[:,1], training_data[:,0], c=labels, marker='o')
-x_vals = np.linspace(-0.5,1.5,100)
-y_vals = (-perceptron.weights[1] * x_vals - perceptron.weights[0])/perceptron.weights[2]
-plt.plot(x_vals,y_vals, 'r--', label='decision boundary')
-plt.title("Binary classification of AND gate using single layer perceptron")
-plt.xlabel('input1')
-plt.ylabel('input2')
+def intializeWeights(input_size, hidden_size, output_size):
+    np.random.seed(42)
+    hidden_layer_input_weights = np.random.randn(input_size, hidden_size)
+    hidden_layer_output_weights = np.random.randn(hidden_size, output_size)
+
+    return hidden_layer_input_weights, hidden_layer_output_weights
+
+def forward_propogation(inputs, hidden_layer_input_weights, hidden_layer_output_weights, activation_function):
+
+    hidden_layer_input = np.dot(inputs,hidden_layer_input_weights)
+    hidden_layer_output = activation_function(hidden_layer_input)
+
+    output_layer_input = np.dot(hidden_layer_output,hidden_layer_output_weights)
+    output_layer_output = sigmoid(output_layer_input)
+
+    return hidden_layer_output,output_layer_output
+
+def backward_propogation(inputs, target, hidden_layer_input_weights, hidden_layer_output_weights,
+                         hidden_layer_output,output_layer_output, learning_rate, activation_derivative):
+
+    output_error = target-output_layer_output
+    output_delta = output_error * sigmoid_derivative(output_layer_output)
+
+    hidden_layer_error = output_delta.dot(hidden_layer_output_weights.T)
+    hidden_layer_delta = hidden_layer_error * activation_derivative(hidden_layer_output)
+
+    hidden_layer_output_weights += hidden_layer_output.T.dot(output_delta)*learning_rate
+    hidden_layer_input_weights +=  inputs.T.dot(hidden_layer_delta)*learning_rate
+
+def training_neural_network(inputs, target, hidden_size, output_size, learning_rate, ephocs, activation_derivative, activation_function):
+    input_size = inputs.shape[1]
+
+    hidden_layer_input_weights, hidden_layer_output_weights = intializeWeights(input_size, hidden_size, output_size)
+
+    loss_history = []
+
+    for epoch in range(ephocs):
+
+        hidden_layer_output,output_layer_output=forward_propogation(inputs, hidden_layer_input_weights, hidden_layer_output_weights, activation_function)
+
+        backward_propogation(inputs, target, hidden_layer_input_weights, hidden_layer_output_weights,
+                         hidden_layer_output,output_layer_output, learning_rate, activation_derivative)
+
+        loss= calucate_loss(target, output_layer_output)
+
+        loss_history.append(loss)
+
+        if epoch % 1000 == 0:
+            print(f"epoch : {epoch} loss : {loss} ")
+
+    return loss_history,hidden_layer_input_weights, hidden_layer_output_weights
+
+def calucate_loss(target, output_layer_output):
+    loss = np.mean((target-output_layer_output)**2)
+    return loss
+
+
+inputs = np.array([[0,0],[0,1],[1,0],[1,1]])
+target = np.array([[0],[1],[1],[0]])
+output_size = 1
+hidden_size = 4
+epochs = 10001
+learning_rate = 0.01
+
+sigmoid_loss_history, sigmoid_hidden_layer_input_weights, sigmoid_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
+                                                                                                                        learning_rate, epochs, sigmoid_derivative, sigmoid)
+
+tanh_loss_history, tanh_hidden_layer_input_weights, tanh_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
+                                                                                                                        learning_rate, epochs, tanh_derivative, tanh)
+
+relu_loss_history, relu_hidden_layer_input_weights, relu_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
+                                                                                                                        learning_rate, epochs, relu_derivative, relu)
+
+plt.plot(sigmoid_loss_history, label='sigmoid')
+plt.plot(tanh_loss_history, label='tanh')
+plt.plot(relu_loss_history, label='relu')
+plt.title("Loss History")
+plt.xlabel('epochs')
+plt.ylabel('loss_history')
 plt.legend()
 plt.show()
