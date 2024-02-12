@@ -72,3 +72,11 @@ learning_rate = 0.01
 
 sigmoid_loss_history, sigmoid_hidden_layer_input_weights, sigmoid_hidden_layer_output_weights = training_neural_network(inputs, target, hidden_size, output_size,
                                                                                                                         learning_rate, epochs, sigmoid_derivative, sigmoid)
+
+plt.plot(sigmoid_loss_history, label='sigmoid')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.title("Performace")
+plt.legend()
+plt.title("Perforamce")
+plt.show()
